@@ -37,11 +37,37 @@ func TestValidate(t *testing.T) {
 	if err := testMessage.Validate(); err != nil {
 		t.Fatalf("Failed to validate message: %s", err)
 	}
-	if err := invalidMessageNoChannel.Validate(); err == nil || err.Error() != "Channel parameter missing" {
+	if err := invalidMessageNoChannel.Validate(); err == nil || err.Error() != "channel parameter missing" {
 		t.Fatalf("Unexpected success when validating message without channel: %s", err)
 	}
-	if err := invalidMessageNoMessage.Validate(); err == nil || err.Error() != "Message parameter missing" {
+	if err := invalidMessageNoMessage.Validate(); err == nil || err.Error() != "message parameter missing" {
 		t.Fatalf("Unexpected success when validating message without message text: %s", err)
+	}
+}
+
+func TestSetDefaultEmoji(t *testing.T) {
+
+	// Set up a mock matcher
+	defer gock.Off()
+	gock.New(uri).
+		Post(path.Base(uri)).
+		MatchType("application/json").
+		AddMatcher(gock.MatchFunc(func(arg1 *http.Request, arg2 *gock.Request) (bool, error) {
+			data, err := ioutil.ReadAll(arg1.Body)
+			if err != nil {
+				return false, err
+			}
+
+			return bytes.Equal(data, []byte(`{"channel":"@test","username":"user","icon_emoji":":information_source:","text":"Hello, world!"}`)), nil
+		})).
+		Reply(http.StatusOK)
+
+	if err := Send(uri, Request{
+		Channel: "@test",
+		User:    "user",
+		Message: "Hello, world!",
+	}); err != nil {
+		t.Fatalf("Failed to send message: %s", err)
 	}
 }
 
@@ -68,10 +94,10 @@ func TestSendSimpleMessage(t *testing.T) {
 }
 
 func TestSendInvalidMessage(t *testing.T) {
-	if err := Send(uri, invalidMessageNoChannel); err == nil || err.Error() != "Error validating RocketChat request: Channel parameter missing" {
+	if err := Send(uri, invalidMessageNoChannel); err == nil || err.Error() != "error validating RocketChat request: channel parameter missing" {
 		t.Fatalf("Unexpected success when sending message without channel: %s", err)
 	}
-	if err := Send(uri, invalidMessageNoMessage); err == nil || err.Error() != "Error validating RocketChat request: Message parameter missing" {
+	if err := Send(uri, invalidMessageNoMessage); err == nil || err.Error() != "error validating RocketChat request: message parameter missing" {
 		t.Fatalf("Unexpected success when sending message without message text: %s", err)
 	}
 }

@@ -51,8 +51,14 @@ type Request struct {
 // Send sends the request to the defined endpoint / RC instance
 func Send(uri string, r Request) error {
 
+	// Validate the request
 	if err := r.Validate(); err != nil {
-		return fmt.Errorf("Error validating RocketChat request: %s", err)
+		return fmt.Errorf("error validating RocketChat request: %s", err)
+	}
+
+	// Set an informational emoji (default would we a warning, if empty)
+	if r.Emoji == "" {
+		r.Emoji = EmojiInfo
 	}
 
 	// Marshal the request into a JSON structure
@@ -73,10 +79,10 @@ func Send(uri string, r Request) error {
 // Validate checks the required fields of a request
 func (r Request) Validate() error {
 	if r.Channel == "" {
-		return fmt.Errorf("Channel parameter missing")
+		return fmt.Errorf("channel parameter missing")
 	}
 	if r.Message == "" {
-		return fmt.Errorf("Message parameter missing")
+		return fmt.Errorf("message parameter missing")
 	}
 	return nil
 }
