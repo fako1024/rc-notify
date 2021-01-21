@@ -1,6 +1,6 @@
 module github.com/fako1024/rc-notify
 
-go 1.15
+go 1.14
 
 require (
 	github.com/fako1024/httpc v1.0.0
