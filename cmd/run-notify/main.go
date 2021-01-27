@@ -10,13 +10,22 @@ import (
 	"strings"
 
 	"github.com/fako1024/rc-notify"
+	"github.com/sevlyar/go-daemon"
+)
+
+const (
+	errCommand   = 1
+	errEmission  = 2
+	errDaemonize = 3
 )
 
 func main() {
 
 	var (
+		ctx            *daemon.Context
 		req            rc.Request
 		uri, message   string
+		background     bool
 		skipSuccessful bool
 		printToConsole bool
 		returnValue    int
@@ -25,9 +34,22 @@ func main() {
 	flag.StringVar(&uri, "uri", "", "RocketChat URI for transmission")
 	flag.StringVar(&req.Channel, "chan", "", "Channel to emit to")
 	flag.StringVar(&req.User, "user", "", "User to emit as")
+	flag.BoolVar(&background, "background", false, "Run command in the background")
 	flag.BoolVar(&skipSuccessful, "skip-successful", false, "Skip notification if command was successful")
 	flag.BoolVar(&printToConsole, "print-console", false, "Emit messages to console / shell as well")
 	flag.Parse()
+
+	// If requested, daemonize / run in background
+	if background {
+		ctx = new(daemon.Context)
+
+		d, err := ctx.Reborn()
+		handleErr(err, 3)
+		if d != nil {
+			return
+		}
+		defer handleErr(ctx.Release(), errDaemonize)
+	}
 
 	// Execute the command based on the remaining command-line arguments
 	output, err := runShellCmd(flag.Args())
@@ -40,7 +62,7 @@ func main() {
 		message += fmt.Sprintln(err)
 		req.Message = fmt.Sprintf("Command `%s` failed:\n```%s```", strings.Join(flag.Args(), " "), message)
 		req.Emoji = rc.EmojiWarning
-		returnValue = 1
+		returnValue = errCommand
 	} else {
 
 		// If successful execution should be notified, prepare the notification
@@ -57,10 +79,7 @@ func main() {
 
 	// If message is present, emit it
 	if req.Message != "" {
-		if err := emitNotification(uri, req); err != nil {
-			fmt.Println(err)
-			returnValue = 2
-		}
+		handleErr(emitNotification(uri, req), errEmission)
 	}
 
 	os.Exit(returnValue)
@@ -70,12 +89,12 @@ func emitNotification(uri string, req rc.Request) error {
 
 	// Validate the request
 	if err := req.Validate(); err != nil {
-		return fmt.Errorf("Invalid request: %s", err)
+		return fmt.Errorf("invalid request: %s", err)
 	}
 
 	// Execute the request
 	if err := rc.Send(uri, req); err != nil {
-		return fmt.Errorf("Failed to send message: %s", err)
+		return fmt.Errorf("failed to send message: %s", err)
 	}
 
 	return nil
@@ -87,15 +106,8 @@ func runShellCmd(args []string) (string, error) {
 		return "", nil
 	}
 
-	var outBuf bytes.Buffer
-
-	// // Parse command line into command + arguments
-	// fields, err := shlex.Split(command)
-	// if err != nil || len(fields) == 0 {
-	// 	return "", fmt.Errorf("failed to parse command (%s): %s", command, err)
-	// }
-
 	// Execute command
+	var outBuf bytes.Buffer
 	err := generateCommand(args, &outBuf).Run()
 
 	return outBuf.String(), err
@@ -116,4 +128,13 @@ func generateCommand(fields []string, outBuf io.Writer) (cmd *exec.Cmd) {
 	cmd.Stderr = outBuf
 
 	return
+}
+
+func handleErr(err error, returnValue int) {
+	if err == nil {
+		return
+	}
+
+	fmt.Println(err)
+	os.Exit(returnValue)
 }
