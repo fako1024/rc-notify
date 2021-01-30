@@ -25,7 +25,7 @@ func main() {
 	flag.Parse()
 
 	// Validate the request
-	if err := req.Validate(); err != nil {
+	if err := req.Sanitize(); err != nil {
 		log.Fatalf("Invalid request: %s", err)
 	}
 

@@ -2,6 +2,7 @@ package rc
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/fako1024/httpc"
 	jsoniter "github.com/json-iterator/go"
@@ -52,13 +53,8 @@ type Request struct {
 func Send(uri string, r Request) error {
 
 	// Validate the request
-	if err := r.Validate(); err != nil {
+	if err := r.Sanitize(); err != nil {
 		return fmt.Errorf("error validating RocketChat request: %s", err)
-	}
-
-	// Set an informational emoji (default would we a warning, if empty)
-	if r.Emoji == "" {
-		r.Emoji = EmojiInfo
 	}
 
 	// Marshal the request into a JSON structure
@@ -76,13 +72,24 @@ func Send(uri string, r Request) error {
 		Run()
 }
 
-// Validate checks the required fields of a request
-func (r Request) Validate() error {
+// Sanitize checks and sanitizes the required fields of a request
+func (r *Request) Sanitize() error {
 	if r.Channel == "" {
 		return fmt.Errorf("channel parameter missing")
 	}
 	if r.Message == "" {
 		return fmt.Errorf("message parameter missing")
 	}
+
+	// If a channel name was provided without any prefix, assume a standard channel
+	if !strings.HasPrefix(r.Channel, "#") && !strings.HasPrefix(r.Channel, "@") {
+		r.Channel = "#" + r.Channel
+	}
+
+	// Set an informational emoji (default would we a warning), if empty
+	if r.Emoji == "" {
+		r.Emoji = EmojiInfo
+	}
+
 	return nil
 }

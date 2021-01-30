@@ -88,7 +88,7 @@ func main() {
 func emitNotification(uri string, req rc.Request) error {
 
 	// Validate the request
-	if err := req.Validate(); err != nil {
+	if err := req.Sanitize(); err != nil {
 		return fmt.Errorf("invalid request: %s", err)
 	}
 

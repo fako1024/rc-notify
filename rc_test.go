@@ -34,18 +34,45 @@ var (
 )
 
 func TestValidate(t *testing.T) {
-	if err := testMessage.Validate(); err != nil {
+	if err := testMessage.Sanitize(); err != nil {
 		t.Fatalf("Failed to validate message: %s", err)
 	}
-	if err := invalidMessageNoChannel.Validate(); err == nil || err.Error() != "channel parameter missing" {
+	if err := invalidMessageNoChannel.Sanitize(); err == nil || err.Error() != "channel parameter missing" {
 		t.Fatalf("Unexpected success when validating message without channel: %s", err)
 	}
-	if err := invalidMessageNoMessage.Validate(); err == nil || err.Error() != "message parameter missing" {
+	if err := invalidMessageNoMessage.Sanitize(); err == nil || err.Error() != "message parameter missing" {
 		t.Fatalf("Unexpected success when validating message without message text: %s", err)
 	}
 }
 
-func TestSetDefaultEmoji(t *testing.T) {
+func TestSanitizeMissingChannelPrefix(t *testing.T) {
+
+	// Set up a mock matcher
+	defer gock.Off()
+	gock.New(uri).
+		Post(path.Base(uri)).
+		MatchType("application/json").
+		AddMatcher(gock.MatchFunc(func(arg1 *http.Request, arg2 *gock.Request) (bool, error) {
+			data, err := ioutil.ReadAll(arg1.Body)
+			if err != nil {
+				return false, err
+			}
+
+			return bytes.Equal(data, []byte(`{"channel":"#test","username":"user","icon_emoji":":rotating_light:","text":"Hello, world!"}`)), nil
+		})).
+		Reply(http.StatusOK)
+
+	if err := Send(uri, Request{
+		Channel: "test",
+		User:    "user",
+		Message: "Hello, world!",
+		Emoji:   EmojiAlert,
+	}); err != nil {
+		t.Fatalf("Failed to send message: %s", err)
+	}
+}
+
+func TestSanitizeDefaultEmoji(t *testing.T) {
 
 	// Set up a mock matcher
 	defer gock.Off()
