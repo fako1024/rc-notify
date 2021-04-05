@@ -60,9 +60,9 @@ type Attachment struct {
 	Title      string  `json:"title"`
 	TitleLink  string  `json:"title_link"`
 	Text       string  `json:"text"`
-	Fields     []Field `json:"fields,omitempty"`
 	ImageURL   string  `json:"image_url,omitempty"`
 	ThumbURL   string  `json:"thumb_url,omitempty"`
+	Fields     []Field `json:"fields,omitempty"`
 }
 
 // Field denotes a (sub-)field to be displayed in the RC message / attachment
