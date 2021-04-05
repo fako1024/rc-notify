@@ -136,5 +136,6 @@ func handleErr(err error, returnValue int) {
 	}
 
 	fmt.Println(err)
+	flag.Usage()
 	os.Exit(returnValue)
 }

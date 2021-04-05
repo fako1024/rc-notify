@@ -58,7 +58,7 @@ func TestSanitizeMissingChannelPrefix(t *testing.T) {
 				return false, err
 			}
 
-			return bytes.Equal(data, []byte(`{"channel":"#test","username":"user","icon_emoji":":rotating_light:","text":"Hello, world!"}`)), nil
+			return bytes.Equal(data, []byte(`{"channel":"#test","username":"user","emoji":":rotating_light:","text":"Hello, world!"}`)), nil
 		})).
 		Reply(http.StatusOK)
 
@@ -85,7 +85,7 @@ func TestSanitizeDefaultEmoji(t *testing.T) {
 				return false, err
 			}
 
-			return bytes.Equal(data, []byte(`{"channel":"@test","username":"user","icon_emoji":":information_source:","text":"Hello, world!"}`)), nil
+			return bytes.Equal(data, []byte(`{"channel":"@test","username":"user","emoji":":information_source:","text":"Hello, world!"}`)), nil
 		})).
 		Reply(http.StatusOK)
 
@@ -111,7 +111,7 @@ func TestSendSimpleMessage(t *testing.T) {
 				return false, err
 			}
 
-			return bytes.Equal(data, []byte(`{"channel":"@test","username":"user","icon_emoji":":rotating_light:","text":"Hello, world!"}`)), nil
+			return bytes.Equal(data, []byte(`{"channel":"@test","username":"user","emoji":":rotating_light:","text":"Hello, world!"}`)), nil
 		})).
 		Reply(http.StatusOK)
 

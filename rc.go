@@ -43,10 +43,33 @@ const (
 
 // Request denotes an RC JSON request
 type Request struct {
-	Channel string `json:"channel"`    // The channel to send to
-	User    string `json:"username"`   // The username to display next to the message
-	Emoji   string `json:"icon_emoji"` // The icon to use for the message
-	Message string `json:"text"`       // The message to send
+	Channel     string       `json:"channel"`               // The channel to send to
+	User        string       `json:"username"`              // The username to display next to the message
+	Alias       string       `json:"alias,omitempty"`       // An alias to add to the message
+	Emoji       string       `json:"emoji"`                 // The icon to use for the message
+	Message     string       `json:"text"`                  // The message to send
+	Attachments []Attachment `json:"attachments,omitempty"` // Potential message attachments
+}
+
+// Attachment denotes a message attachment, like subfields or images and links
+type Attachment struct {
+	Color      string  `json:"color,omitempty"`
+	AuthorName string  `json:"author_name,omitempty"`
+	AuthorLink string  `json:"author_link,omitempty"`
+	AuthorIcon string  `json:"author_icon,omitempty"`
+	Title      string  `json:"title"`
+	TitleLink  string  `json:"title_link"`
+	Text       string  `json:"text"`
+	Fields     []Field `json:"fields,omitempty"`
+	ImageURL   string  `json:"image_url,omitempty"`
+	ThumbURL   string  `json:"thumb_url,omitempty"`
+}
+
+// Field denotes a (sub-)field to be displayed in the RC message / attachment
+type Field struct {
+	Title string `json:"title"`
+	Value string `json:"value"`
+	Short bool   `json:"short"`
 }
 
 // Send sends the request to the defined endpoint / RC instance
