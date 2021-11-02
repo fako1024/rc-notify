@@ -2,10 +2,10 @@ package rc
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/fako1024/httpc"
-	jsoniter "github.com/json-iterator/go"
 )
 
 const (
@@ -80,18 +80,10 @@ func Send(uri string, r Request) error {
 		return fmt.Errorf("error validating RocketChat request: %s", err)
 	}
 
-	// Marshal the request into a JSON structure
-	json, err := jsoniter.Marshal(r)
-	if err != nil {
-		return err
-	}
-
 	// Prepare and run the request
 	return httpc.New("POST", uri).
-		Headers(httpc.Params{
-			"Content-Type": "application/json",
-		}).
-		Body(json).
+		Transport(http.DefaultTransport).
+		EncodeJSON(r).
 		Run()
 }
 
