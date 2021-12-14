@@ -22,11 +22,6 @@ req := rc.Request{
 	Emoji:   rc.EmojiAlert,
 }
 
-// Validate the request
-if err := req.Validate(); err != nil {
-	log.Fatalf("Invalid request: %s", err)
-}
-
 // Execute the request (set webhook URI accordingly)
 uri := "https://your.rc.instance.com/hooks/.../..."
 if err := rc.Send(uri, req); err != nil {
