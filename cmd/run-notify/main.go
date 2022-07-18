@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"flag"
 	"fmt"
@@ -22,13 +23,14 @@ const (
 func main() {
 
 	var (
-		ctx            *daemon.Context
-		req            rc.Request
-		uri, message   string
-		background     bool
-		skipSuccessful bool
-		printToConsole bool
-		returnValue    int
+		ctx             *daemon.Context
+		req             rc.Request
+		uri, message    string
+		background      bool
+		skipSuccessful  bool
+		printToConsole  bool
+		returnValue     int
+		messageMaxLines int
 	)
 
 	flag.StringVar(&uri, "uri", "", "RocketChat URI for transmission")
@@ -37,6 +39,7 @@ func main() {
 	flag.BoolVar(&background, "background", false, "Run command in the background")
 	flag.BoolVar(&skipSuccessful, "skip-successful", false, "Skip notification if command was successful")
 	flag.BoolVar(&printToConsole, "print-console", false, "Emit messages to console / shell as well")
+	flag.IntVar(&messageMaxLines, "max-lines", -1, "Maximum number of command output lines to emit (default: unlimited)")
 	flag.Parse()
 
 	// If requested, daemonize / run in background
@@ -60,14 +63,14 @@ func main() {
 	// If an error occurred, prepare the notification
 	if err != nil {
 		message += fmt.Sprintln(err)
-		req.Message = fmt.Sprintf("Command `%s` failed:\n```%s```", strings.Join(flag.Args(), " "), message)
+		req.Message = fmt.Sprintf("Command `%s` failed:\n```%s```", strings.Join(flag.Args(), " "), limitMessage(message, messageMaxLines))
 		req.Emoji = rc.EmojiWarning
 		returnValue = errCommand
 	} else {
 
 		// If successful execution should be notified, prepare the notification
 		if !skipSuccessful {
-			req.Message = fmt.Sprintf("Command `%s` successful:\n```%s```", strings.Join(flag.Args(), " "), message)
+			req.Message = fmt.Sprintf("Command `%s` successful:\n```%s```", strings.Join(flag.Args(), " "), limitMessage(message, messageMaxLines))
 			req.Emoji = rc.EmojiInfo
 		}
 	}
@@ -127,6 +130,25 @@ func generateCommand(fields []string, outBuf io.Writer) (cmd *exec.Cmd) {
 	cmd.Stdout = outBuf
 	cmd.Stderr = outBuf
 
+	return
+}
+
+func limitMessage(input string, maxLen int) (output string) {
+
+	if maxLen <= 0 {
+		return input
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(input))
+	linesRead := 0
+	for scanner.Scan() {
+		output += fmt.Sprintln(scanner.Text())
+		linesRead++
+
+		if linesRead >= maxLen {
+			return
+		}
+	}
 	return
 }
 
