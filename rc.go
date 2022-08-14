@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/fako1024/httpc"
 )
@@ -77,12 +78,16 @@ func Send(uri string, r Request) error {
 
 	// Validate the request
 	if err := r.Sanitize(); err != nil {
-		return fmt.Errorf("error validating RocketChat request: %s", err)
+		return fmt.Errorf("error validating RocketChat request: %w", err)
 	}
 
 	// Prepare and run the request
 	return httpc.New("POST", uri).
 		Transport(http.DefaultTransport).
+		RetryBackOff(httpc.Intervals{
+			time.Second,
+			5 * time.Second,
+		}).
 		EncodeJSON(r).
 		Run()
 }

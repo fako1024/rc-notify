@@ -4,13 +4,13 @@ go 1.14
 
 require (
 	github.com/fako1024/httpc v1.0.10
-	github.com/getkin/kin-openapi v0.97.0 // indirect
-	github.com/go-openapi/swag v0.21.1 // indirect
+	github.com/getkin/kin-openapi v0.98.0 // indirect
+	github.com/go-openapi/swag v0.22.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/sevlyar/go-daemon v0.1.6
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
-	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
+	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
+	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	gopkg.in/h2non/gock.v1 v1.1.2
 )

@@ -92,12 +92,12 @@ func emitNotification(uri string, req rc.Request) error {
 
 	// Validate the request
 	if err := req.Sanitize(); err != nil {
-		return fmt.Errorf("invalid request: %s", err)
+		return fmt.Errorf("invalid request: %w", err)
 	}
 
 	// Execute the request
 	if err := rc.Send(uri, req); err != nil {
-		return fmt.Errorf("failed to send message: %s", err)
+		return fmt.Errorf("failed to send message: %w", err)
 	}
 
 	return nil
