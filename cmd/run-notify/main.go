@@ -63,14 +63,14 @@ func main() {
 	// If an error occurred, prepare the notification
 	if err != nil {
 		message += fmt.Sprintln(err)
-		req.Message = fmt.Sprintf("Command `%s` failed:\n```%s```", strings.Join(flag.Args(), " "), limitMessage(message, messageMaxLines))
+		req.Message = fmt.Sprintf("Command `%s` failed:\n```\n%s\n```", strings.Join(flag.Args(), " "), limitMessage(message, messageMaxLines))
 		req.Emoji = rc.EmojiWarning
 		returnValue = errCommand
 	} else {
 
 		// If successful execution should be notified, prepare the notification
 		if !skipSuccessful {
-			req.Message = fmt.Sprintf("Command `%s` successful:\n```%s```", strings.Join(flag.Args(), " "), limitMessage(message, messageMaxLines))
+			req.Message = fmt.Sprintf("Command `%s` successful:\n```\n%s\n```", strings.Join(flag.Args(), " "), limitMessage(message, messageMaxLines))
 			req.Emoji = rc.EmojiInfo
 		}
 	}

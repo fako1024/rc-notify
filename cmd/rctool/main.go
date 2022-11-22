@@ -31,7 +31,7 @@ func main() {
 
 	// Wrap in code markup if requested
 	if code {
-		req.Message = fmt.Sprintf("```%s```", req.Message)
+		req.Message = fmt.Sprintf("```\n%s\n```", req.Message)
 	}
 
 	// Execute the request
