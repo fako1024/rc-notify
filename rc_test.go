@@ -128,7 +128,7 @@ func TestUploadFile(t *testing.T) {
 	defer gock.Off()
 	gock.New(uploadURI).
 		Post("/api/v1/rooms.upload/randomRoomID").
-		MatchType("text/plain").
+		MatchType("application/json").
 		MatchHeaders(map[string]string{
 			"X-User-Id":    "testID",
 			"X-Auth-Token": "testToken",
