@@ -147,7 +147,7 @@ func UploadFile(endpoint string, auth APIAuth, req FileUploadRequest) error {
 		Headers(httpc.Params{
 			"X-User-Id":    auth.UserID,
 			"X-Auth-Token": auth.Token,
-			"Content-Type": http.DetectContentType(req.Data),
+			"Content-Type": "application/json",
 		}).
 		Body(req.Data).
 		Run()
