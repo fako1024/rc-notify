@@ -2,7 +2,7 @@ package rc
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path"
 	"testing"
@@ -53,7 +53,7 @@ func TestSanitizeMissingChannelPrefix(t *testing.T) {
 		Post(path.Base(uri)).
 		MatchType("application/json").
 		AddMatcher(gock.MatchFunc(func(arg1 *http.Request, arg2 *gock.Request) (bool, error) {
-			data, err := ioutil.ReadAll(arg1.Body)
+			data, err := io.ReadAll(arg1.Body)
 			if err != nil {
 				return false, err
 			}
@@ -80,7 +80,7 @@ func TestSanitizeDefaultEmoji(t *testing.T) {
 		Post(path.Base(uri)).
 		MatchType("application/json").
 		AddMatcher(gock.MatchFunc(func(arg1 *http.Request, arg2 *gock.Request) (bool, error) {
-			data, err := ioutil.ReadAll(arg1.Body)
+			data, err := io.ReadAll(arg1.Body)
 			if err != nil {
 				return false, err
 			}
@@ -106,7 +106,7 @@ func TestSendSimpleMessage(t *testing.T) {
 		Post(path.Base(uri)).
 		MatchType("application/json").
 		AddMatcher(gock.MatchFunc(func(arg1 *http.Request, arg2 *gock.Request) (bool, error) {
-			data, err := ioutil.ReadAll(arg1.Body)
+			data, err := io.ReadAll(arg1.Body)
 			if err != nil {
 				return false, err
 			}
@@ -117,6 +117,46 @@ func TestSendSimpleMessage(t *testing.T) {
 
 	if err := Send(uri, testMessage); err != nil {
 		t.Fatalf("Failed to send message: %s", err)
+	}
+}
+
+func TestUploadFile(t *testing.T) {
+
+	uploadURI := "https://chat.example.org/api/v1/rooms.upload/randomRoomID"
+
+	// Set up a mock matcher
+	defer gock.Off()
+	gock.New(uploadURI).
+		Post("/api/v1/rooms.upload/randomRoomID").
+		MatchType("text/plain").
+		MatchHeaders(map[string]string{
+			"X-User-Id":    "testID",
+			"X-Auth-Token": "testToken",
+		}).
+		MatchParams(map[string]string{
+			"msg":         "Test Message",
+			"description": "Test Description",
+		}).
+		AddMatcher(gock.MatchFunc(func(arg1 *http.Request, arg2 *gock.Request) (bool, error) {
+			data, err := io.ReadAll(arg1.Body)
+			if err != nil {
+				return false, err
+			}
+
+			return bytes.Equal(data, []byte(`This is a simple text file`)), nil
+		})).
+		Reply(http.StatusOK)
+
+	if err := UploadFile("https://chat.example.org/", APIAuth{
+		UserID: "testID",
+		Token:  "testToken",
+	}, FileUploadRequest{
+		Data:        []byte(`This is a simple text file`),
+		RoomID:      "randomRoomID",
+		Message:     "Test Message",
+		Description: "Test Description",
+	}); err != nil {
+		t.Fatalf("Failed to upload file: %s", err)
 	}
 }
 

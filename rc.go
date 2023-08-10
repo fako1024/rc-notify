@@ -113,3 +113,42 @@ func (r *Request) Sanitize() error {
 
 	return nil
 }
+
+type FileUploadRequest struct {
+	Data        []byte
+	RoomID      string
+	Message     string
+	Description string
+}
+
+type APIAuth struct {
+	UserID string
+	Token  string
+}
+
+func UploadFile(endpoint string, auth APIAuth, req FileUploadRequest) error {
+
+	params := make(httpc.Params)
+	if req.Message != "" {
+		params["msg"] = req.Message
+	}
+	if req.Description != "" {
+		params["description"] = req.Description
+	}
+
+	// Prepare and run the request
+	return httpc.New("POST", strings.TrimRight(endpoint, "/")+"/api/v1/rooms.upload/"+req.RoomID).
+		Transport(http.DefaultTransport).
+		RetryBackOff(httpc.Intervals{
+			time.Second,
+			5 * time.Second,
+		}).
+		QueryParams(params).
+		Headers(httpc.Params{
+			"X-User-Id":    auth.UserID,
+			"X-Auth-Token": auth.Token,
+			"Content-Type": http.DetectContentType(req.Data),
+		}).
+		Body(req.Data).
+		Run()
+}
