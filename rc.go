@@ -1,8 +1,12 @@
 package rc
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"strings"
 	"time"
 
@@ -128,12 +132,34 @@ type APIAuth struct {
 
 func UploadFile(endpoint string, auth APIAuth, req FileUploadRequest) error {
 
-	params := make(httpc.Params)
+	body := new(bytes.Buffer)
+
+	writer := multipart.NewWriter(body)
+	if err := writer.SetBoundary("45b03ac0dfd03bafd94e05b0547ed86c5bfb46a201451552a604d6a3aac1"); err != nil {
+		return fmt.Errorf("failed to set multipart boundary: %w", err)
+	}
+	imageFile, err := createImageFormFile(writer, "image.jpg")
+	if err != nil {
+		return err
+	}
+
+	if n, err := imageFile.Write(req.Data); err != nil || n != len(req.Data) {
+		return fmt.Errorf("failed to write image data to buffer (err: %w)", err)
+	}
+
 	if req.Message != "" {
-		params["msg"] = req.Message
+		if err := writer.WriteField("msg", req.Message); err != nil {
+			return fmt.Errorf("failed to set message: %w", err)
+		}
 	}
 	if req.Description != "" {
-		params["description"] = req.Description
+		if err := writer.WriteField("description", req.Description); err != nil {
+			return fmt.Errorf("failed to set description: %w", err)
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return err
 	}
 
 	// Prepare and run the request
@@ -143,12 +169,18 @@ func UploadFile(endpoint string, auth APIAuth, req FileUploadRequest) error {
 			time.Second,
 			5 * time.Second,
 		}).
-		QueryParams(params).
 		Headers(httpc.Params{
 			"X-User-Id":    auth.UserID,
 			"X-Auth-Token": auth.Token,
-			"Content-Type": "application/json",
+			"Content-Type": writer.FormDataContentType(),
 		}).
-		Body(req.Data).
+		Body(body.Bytes()).
 		Run()
+}
+
+func createImageFormFile(w *multipart.Writer, filename string) (io.Writer, error) {
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s"`, "file", filename))
+	h.Set("Content-Type", "image/jpeg")
+	return w.CreatePart(h)
 }

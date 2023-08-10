@@ -2,7 +2,9 @@ package rc
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"path"
 	"testing"
@@ -128,19 +130,33 @@ func TestUploadFile(t *testing.T) {
 	defer gock.Off()
 	gock.New(uploadURI).
 		Post("/api/v1/rooms.upload/randomRoomID").
-		MatchType("application/json").
+		MatchType("multipart/form-data; boundary=45b03ac0dfd03bafd94e05b0547ed86c5bfb46a201451552a604d6a3aac1").
 		MatchHeaders(map[string]string{
 			"X-User-Id":    "testID",
 			"X-Auth-Token": "testToken",
 		}).
-		MatchParams(map[string]string{
-			"msg":         "Test Message",
-			"description": "Test Description",
-		}).
 		AddMatcher(gock.MatchFunc(func(arg1 *http.Request, arg2 *gock.Request) (bool, error) {
-			data, err := io.ReadAll(arg1.Body)
+			reader := multipart.NewReader(arg1.Body, "45b03ac0dfd03bafd94e05b0547ed86c5bfb46a201451552a604d6a3aac1")
+
+			part, err := reader.NextPart()
 			if err != nil {
 				return false, err
+			}
+
+			data, err := io.ReadAll(part)
+			if err != nil {
+				return false, err
+			}
+
+			formData, err := reader.ReadForm(1024)
+			if err != nil {
+				return false, err
+			}
+			if len(formData.Value["msg"]) != 1 || formData.Value["msg"][0] != "Test Message" {
+				return false, fmt.Errorf("missing / invalid message: %v", formData.Value)
+			}
+			if len(formData.Value["description"]) != 1 || formData.Value["description"][0] != "Test Description" {
+				return false, fmt.Errorf("missing / invalid description: %v", formData.Value)
 			}
 
 			return bytes.Equal(data, []byte(`This is a simple text file`)), nil
